@@ -1,0 +1,6 @@
+pyngrok
+streamlit
+moviepy
+SpeechRecognition
+translate
+gTTS
