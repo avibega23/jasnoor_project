@@ -1,0 +1,12 @@
+__pycache__/
+*.pyc
+*.pyo
+.env
+*.mp4
+*.wav
+*.mp3
+uploaded_video.*
+extracted_audio.*
+hindi_audio.*
+.venv/
+venv/

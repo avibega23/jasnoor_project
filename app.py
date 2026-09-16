@@ -1,4 +1,5 @@
-import time as t
+import os
+import tempfile
 import streamlit as st
 from moviepy import VideoFileClip
 import speech_recognition as sr
@@ -93,46 +94,50 @@ def main():
     st.write("---")
     
     if uploaded_file is not None:
-        with st.spinner("Processing video and extracting audio..."):
-            t.sleep(2)
+        with tempfile.NamedTemporaryFile(delete=False, suffix=".mp4") as tmp_video:
+            tmp_video.write(uploaded_file.read())
+            video_path = tmp_video.name
+
         st.video(uploaded_file)
-        video_path = "uploaded_video.mp4"
-        with open(video_path, "wb") as f:
-            f.write(uploaded_file.read())
+
+        with st.spinner("Processing video and extracting audio..."):
+            audio_path = video_path.replace(".mp4", ".wav")
+            extract_audio(video_path, audio_path)
 
         st.subheader("English audio: :headphones:")
-        audio_path = "extracted_audio.wav"
-        extract_audio(video_path, audio_path)
-
         st.audio(audio_path)
-        with st.spinner("Transcripting audio..."):
-            t.sleep(2)
 
-        transcribed_text = transcribe_audio(audio_path)
+        with st.spinner("Transcribing audio..."):
+            transcribed_text = transcribe_audio(audio_path)
+
         if transcribed_text == "Could not understand audio":
             st.error("Could not understand audio. Please try again.")
-        
+
         st.markdown('<h2 class="subheader">Transcribed Text:</h2>', unsafe_allow_html=True)
         st.markdown(f'<p class="text">{transcribed_text}</p>', unsafe_allow_html=True)
 
         st.success("TRANSCRIPTION IS SUCCESSFULLY DONE.")
         st.write("---")
-        
-        with st.spinner("Translating..."):
-            t.sleep(2)
 
-        translated_text = translate_text(transcribed_text, "en", "hi")
+        with st.spinner("Translating..."):
+            translated_text = translate_text(transcribed_text, "en", "hi")
+
         st.markdown('<h2 class="subheader">Translated Text:</h2>', unsafe_allow_html=True)
         st.markdown(f'<p class="text">{translated_text}</p>', unsafe_allow_html=True)
         st.success("TRANSLATION IS SUCCESSFULLY DONE.")
-        
+
         with st.spinner("Processing audio..."):
-            t.sleep(2)
+            hindi_audio_path = text_to_speech(translated_text, lang='hi', output_path=video_path.replace(".mp4", "_hindi.mp3"))
+
         st.subheader("Hindi audio: :headphones:")
-        hindi_audio_path = text_to_speech(translated_text, lang='hi', output_path='hindi_audio.mp3')
         st.audio(hindi_audio_path)
         st.write("---")
         st.subheader("Thank you! :smile:")
+
+        # Cleanup temp files
+        for f in [video_path, audio_path, hindi_audio_path]:
+            if os.path.exists(f):
+                os.remove(f)
 
 if __name__ == "__main__":
     main()
